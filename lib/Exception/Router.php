@@ -18,7 +18,8 @@
  * Aroo. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'Aroo/Application.php';
+namespace Aroo\Exception;
 
-$application = new \Aroo\Application;
-$application->bootstrap()->run();
+class Router extends \Aroo\Exception {
+	
+}

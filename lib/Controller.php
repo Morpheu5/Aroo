@@ -18,7 +18,15 @@
  * Aroo. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'Aroo/Application.php';
+namespace Aroo;
 
-$application = new \Aroo\Application;
-$application->bootstrap()->run();
+class Controller {
+	protected $params = array();
+	
+	function setParams($params = null) {
+		if($params === null) {
+			throw new \Aroo\Exception\Controller\UndefinedParams('Undefined parameters');
+		}
+		$this->params = $params;
+	}
+}
