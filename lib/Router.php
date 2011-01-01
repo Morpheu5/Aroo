@@ -28,7 +28,8 @@ class Router {
 	private $defaults = array(
 		'path' => '/',
 		'controller' => 'index',
-		'action' => 'index'
+		'action' => 'index',
+		'params' => array()
 	);
 	
 	function addRoute($route = array()) {
