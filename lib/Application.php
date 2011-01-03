@@ -20,17 +20,26 @@
 
 namespace Aroo;
 
-require_once 'spyc/spyc.php';
-require_once 'Aroo/Registry.php';
-require_once 'Aroo/Router.php';
+require_once 'Spyc/spyc.php';
 
 class Application {
+
+	public function __construct() {
+		spl_autoload_register(array($this, 'applicationAutoload'));
+	}
+
 	public function bootstrap() {
 		// Load configuration
 		$ymlCfg = \Spyc::YAMLLoad(realpath(APPLICATION_PATH . '/configs/application.yml'));
 		$configuration = $ymlCfg[APPLICATION_ENV];
 		if(array_key_exists('_inherits', $configuration)) {
 			$configuration = array_merge($ymlCfg[$configuration['_inherits']], $configuration);
+		}
+		// If a temp directory has not been specified, follow the convention,
+		// but allow the application to modify it later
+		if(!array_key_exists('tempDir', $configuration)) {
+			$tmpDir = realpath(APPLICATION_PATH . '/..');
+			$configuration['tempDir'] = $tmpDir . '/tmp';
 		}
 		unset($configuration['_inherits']);
 		Registry::set('aroo_configuration', $configuration);
@@ -62,13 +71,34 @@ class Application {
 		$request_uri = preg_replace($patterns, $replacements, $_SERVER['REQUEST_URI']);
 		Registry::set('aroo_request_uri', $request_uri);
 		Registry::set('aroo_request_method', $_SERVER['REQUEST_METHOD']);
-		
-		spl_autoload_register(array($this, 'applicationAutoload'));
+
+		// Bootstrap the application
+		if(@include_once APPLICATION_PATH . '/Bootstrap.php') {
+			$appBootstrapClass = '\\' . $configuration['applicationNamespace'] . '\\' . 'Bootstrap';
+			$appBootstrap = new $appBootstrapClass;
+			$appBootstrap->bootstrap();
+			
+			$resources = array();
+			foreach(get_class_methods($appBootstrapClass) as $method) {
+				if(substr($method, 0, 4) == 'init') {
+					$resource = $appBootstrap->$method();
+				}
+				if(isset($resource) && ($resource !== null)) {
+					$resourceName = lcfirst(substr($method, 4));
+					$resources[$resourceName] = $resource;
+				}
+			}
+		}
 
 		return $this;
 	}
 
 	public function run() {
+		// At this point we should have a temp dir configured
+		$config = Registry::get('aroo_configuration');
+		if(!file_exists($config['tempDir'])) {
+			throw new \Aroo\Exception\InvalidDirectory('Temporary directory "' . $config['tempDir'] . ' is not valid"');
+		}
 		// Take the request and pass it to the router
 		$router = Router::getInstance();
 		try {
