@@ -14,5 +14,5 @@ Dependencies
 
 Aroo depends on these open-source projects:
 
-* [Spyc](https://code.google.com/p/spyc/), included as `spyc/spyc.php`
+* [Spyc](https://code.google.com/p/spyc/), included as `Spyc/spyc.php`
 * [Smarty](http://www.smarty.net/), included as `Smarty/Smarty.class.php`
